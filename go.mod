@@ -1,4 +1,4 @@
-module gitee.com/cao_5/cao-log
+module github.com/CaoStudio/cao-log
 
 go 1.23.1
 
