@@ -3,8 +3,8 @@ package caolog_test
 import (
 	"bytes"
 	"context"
-	caolog "gitee.com/cao_5/cao-log"
-	"gitee.com/cao_5/cao-log/plugin"
+	caolog "github.com/CaoStudio/cao-log"
+	"github.com/CaoStudio/cao-log/plugin"
 	"github.com/goccy/go-json"
 	"runtime"
 	"strconv"
