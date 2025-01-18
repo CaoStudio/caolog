@@ -6,6 +6,7 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"io"
+	"os"
 	"runtime"
 	"strconv"
 	"strings"
@@ -83,7 +84,7 @@ func InitLogger(level zapcore.Level, options ...Option) {
 		EncodeDuration: zapcore.SecondsDurationEncoder,
 		EncodeCaller:   zapcore.ShortCallerEncoder,
 	})
-	core := zapcore.NewCore(encoder, zapcore.AddSync(io.Discard), level)
+	core := zapcore.NewCore(encoder, os.Stdout, level)
 
 	logger = &Logger{
 		Logger:  zap.New(core),
