@@ -332,24 +332,46 @@ func (l *Logger) Fatal(deep int, args ...interface{}) {
 	l.CFatal(context.Background(), deep, args...)
 }
 
-func Debug(c context.Context, args ...interface{}) {
+func CDebug(c context.Context, args ...interface{}) {
 	logger.CDebug(c, logDeep, args...)
 }
-func Info(c context.Context, args ...interface{}) {
+func CInfo(c context.Context, args ...interface{}) {
 	logger.CInfo(c, logDeep, args...)
 }
-func Warn(c context.Context, args ...interface{}) {
+func CWarn(c context.Context, args ...interface{}) {
 	logger.CWarn(c, logDeep, args...)
 }
-func Error(c context.Context, args ...interface{}) {
+func CError(c context.Context, args ...interface{}) {
 	logger.CError(c, logDeep, args...)
 }
-func Panic(c context.Context, args ...interface{}) {
+func CPanic(c context.Context, args ...interface{}) {
 	logger.CPanic(c, logDeep, args...)
 }
-func DPanic(c context.Context, args ...interface{}) {
+func CDPanic(c context.Context, args ...interface{}) {
 	logger.CDPanic(c, logDeep, args...)
 }
-func Fatal(c context.Context, args ...interface{}) {
+func CFatal(c context.Context, args ...interface{}) {
 	logger.CFatal(c, logDeep, args...)
+}
+
+func Debug(args ...interface{}) {
+	logger.CDebug(context.Background(), logDeep, args...)
+}
+func Info(args ...interface{}) {
+	logger.CInfo(context.Background(), logDeep, args...)
+}
+func Warn(args ...interface{}) {
+	logger.CWarn(context.Background(), logDeep, args...)
+}
+func Error(args ...interface{}) {
+	logger.CError(context.Background(), logDeep, args...)
+}
+func Panic(args ...interface{}) {
+	logger.CPanic(context.Background(), logDeep, args...)
+}
+func DPanic(args ...interface{}) {
+	logger.CDPanic(context.Background(), logDeep, args...)
+}
+func Fatal(args ...interface{}) {
+	logger.CFatal(context.Background(), logDeep, args...)
 }
