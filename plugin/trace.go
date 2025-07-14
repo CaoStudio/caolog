@@ -3,7 +3,7 @@ package plugin
 import (
 	"context"
 	"errors"
-	caolog "github.com/CaoStudio/cao-log"
+	caolog "github.com/CaoStudio/caolog"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"

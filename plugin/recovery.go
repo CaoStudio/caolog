@@ -3,7 +3,7 @@ package plugin
 import (
 	"context"
 	"fmt"
-	caolog "github.com/CaoStudio/cao-log"
+	caolog "github.com/CaoStudio/caolog"
 	"go.uber.org/zap"
 	"net"
 	"os"

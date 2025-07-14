@@ -1,4 +1,4 @@
-module github.com/CaoStudio/cao-log
+module github.com/CaoStudio/caolog
 
 go 1.23.1
 

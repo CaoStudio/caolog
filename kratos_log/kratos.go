@@ -3,7 +3,7 @@ package kratoslog
 import (
 	"context"
 	"fmt"
-	caolog "github.com/CaoStudio/cao-log"
+	"github.com/CaoStudio/caolog"
 	"github.com/go-kratos/kratos/v2/errors"
 	kratoslog "github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/middleware"
