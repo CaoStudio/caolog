@@ -3,8 +3,6 @@ package caolog
 import (
 	"context"
 	"github.com/bytedance/sonic"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 	"io"
 	"os"
 	"runtime"
@@ -16,7 +14,7 @@ import (
 
 var (
 	logger *Logger
-	Level  zapcore.Level
+	logLevel Level
 	writer io.Writer
 )
 
@@ -25,74 +23,84 @@ const (
 	tabByte = byte('\t')
 )
 
+// Level 日志级别
+type Level int8
+
+const (
+	DebugLevel  Level = -1
+	InfoLevel   Level = 0
+	WarnLevel   Level = 1
+	ErrorLevel  Level = 2
+	DPanicLevel Level = 3
+	PanicLevel  Level = 4
+	FatalLevel  Level = 5
+)
+
+var levelStrings = map[Level]string{
+	DebugLevel:  "DEBUG",
+	InfoLevel:   "INFO",
+	WarnLevel:   "WARN",
+	ErrorLevel:  "ERROR",
+	DPanicLevel: "DPANIC",
+	PanicLevel:  "PANIC",
+	FatalLevel:  "FATAL",
+}
+
+func (l Level) String() string {
+	if l < DebugLevel || l > FatalLevel {
+		return "UNKNOWN"
+	}
+	return levelStrings[l]
+}
+
+func (l Level) CapitalString() string {
+	return l.String()
+}
+
 type (
 	Logger struct {
-		*zap.Logger
+		writer  io.Writer
+		level   Level
 		Options []Option
 	}
 
 	Details struct {
-		Level zapcore.Level `json:"level,omitempty"`
-		// 调用log的文件路径
-		Path string `json:"path,omitempty"`
-		// Time holds the value of the "time" field.
-		Time time.Time `json:"time,omitempty"`
-		// 日志内容
-		Message string `json:"message,omitempty"`
-		// 内容列表
-		Value []interface{}
+		Level   Level       `json:"level,omitempty"`
+		Path    string      `json:"path,omitempty"`
+		Time    time.Time   `json:"time,omitempty"`
+		Message string      `json:"message,omitempty"`
+		Value   []interface{} `json:"-"`
 	}
 )
-
-const (
-	DebugLevel  = zapcore.DebugLevel
-	InfoLevel   = zapcore.InfoLevel
-	WarnLevel   = zapcore.WarnLevel
-	ErrorLevel  = zapcore.ErrorLevel
-	DPanicLevel = zapcore.DPanicLevel
-	PanicLevel  = zapcore.PanicLevel
-	FatalLevel  = zapcore.FatalLevel
-)
-
-func init() {
-	Level = DebugLevel
-	logger = &Logger{
-		Logger: zap.NewExample(),
-	}
-}
 
 type Option func(ctx context.Context, details *Details)
 
-// InitLogger
-// level: debug,info,warn,error,panic,fatal
-func InitLogger(level zapcore.Level, options ...Option) {
-	Level = level
-	customLevelEncoder := func(level zapcore.Level, enc zapcore.PrimitiveArrayEncoder) {
-		enc.AppendString("[" + level.CapitalString() + "]")
-	}
-
-	encoder := zapcore.NewConsoleEncoder(zapcore.EncoderConfig{
-		TimeKey:        "ts",
-		LevelKey:       "level",
-		NameKey:        "logger",
-		CallerKey:      "caller",
-		MessageKey:     "msg",
-		StacktraceKey:  "stacktrace",
-		LineEnding:     zapcore.DefaultLineEnding,
-		EncodeLevel:    customLevelEncoder,
-		EncodeTime:     zapcore.TimeEncoderOfLayout("[2006-01-02 - 15:04:05]"),
-		EncodeDuration: zapcore.SecondsDurationEncoder,
-		EncodeCaller:   zapcore.ShortCallerEncoder,
-	})
-	core := zapcore.NewCore(encoder, os.Stdout, level)
-
+func init() {
+	logLevel = DebugLevel
 	logger = &Logger{
-		Logger:  zap.New(core),
+		writer: os.Stdout,
+		level:  DebugLevel,
+	}
+}
+
+// InitLogger 初始化日志
+// level: debug,info,warn,error,panic,fatal
+func InitLogger(level Level, options ...Option) {
+	logLevel = level
+	logger = &Logger{
+		writer:  os.Stdout,
+		level:   level,
 		Options: make([]Option, 0),
 	}
 	if len(options) > 0 {
 		logger.with(options...)
 	}
+}
+
+// SetWriter 设置日志输出
+func SetWriter(w io.Writer) {
+	logger.writer = w
+	writer = w
 }
 
 func GetLogger() *Logger {
@@ -110,34 +118,24 @@ func getValue(v interface{}) string {
 	case float32:
 		return strconv.FormatFloat(float64(v.(float32)), 'f', -1, 64)
 	case int:
-		//return FormatInt(int64(v.(int)))
 		return strconv.FormatInt(int64(v.(int)), 10)
 	case uint:
-		//return FormatUint(uint64(v.(uint)))
 		return strconv.FormatUint(uint64(v.(uint)), 10)
 	case int8:
-		//return FormatInt(int64(v.(int8)))
 		return strconv.FormatInt(int64(v.(int8)), 10)
 	case uint8:
-		//return FormatUint(uint64(v.(uint8)))
 		return strconv.FormatUint(uint64(v.(uint8)), 10)
 	case int16:
-		//return FormatInt(int64(v.(int16)))
 		return strconv.FormatInt(int64(v.(int16)), 10)
 	case uint16:
-		//return FormatUint(uint64(v.(uint16)))
 		return strconv.FormatUint(uint64(v.(uint16)), 10)
 	case int32:
-		//return FormatInt(int64(v.(int32)))
 		return strconv.FormatInt(int64(v.(int32)), 10)
 	case uint32:
-		//return FormatUint(uint64(v.(uint32)))
 		return strconv.FormatUint(uint64(v.(uint32)), 10)
 	case int64:
-		//return FormatInt(v.(int64))
 		return strconv.FormatInt(v.(int64), 10)
 	case uint64:
-		//return FormatUint(v.(uint64))
 		return strconv.FormatUint(v.(uint64), 10)
 	case string:
 		return v.(string)
@@ -145,10 +143,7 @@ func getValue(v interface{}) string {
 		return string(v.([]byte))
 	case error:
 		return v.(error).Error()
-	//case []int32:
-	//	return FormatBufferPool(v)
 	default:
-		//newValue, err := json.Marshal(v)
 		newValue, err := sonic.Marshal(&v)
 		if err != nil {
 			return "Log Format Error:" + err.Error()
@@ -175,23 +170,10 @@ func FormatBufferPool[t any](value ...t) string {
 		builder.WriteString(v)
 		if index <= len(value)-1 {
 			builder.WriteString("\t")
-			//builder.Write([]byte{tabByte})
 		}
 	}
 
-	//msgBytes := make([]byte, bufferLen+len(value)-1)
-	//flagNum := 0
-	//for i, s := range cache {
-	//	copy(msgBytes[flagNum:], s)
-	//	flagNum += len(s)
-	//	if i < len(cache)-1 {
-	//		msgBytes[flagNum] = tabByte
-	//		flagNum++
-	//	}
-	//}
-
 	return builder.String()
-	//return *(*string)(unsafe.Pointer(&msgBytes))
 }
 
 func PenultimateIndexByteString(s string, c byte) int {
@@ -208,16 +190,12 @@ func PenultimateIndexByteString(s string, c byte) int {
 	return -1
 }
 
-//func MakeDetails(deep int, level zapcore.Level, value ...interface{}) Details {
-//	return logger.makeDetails(deep, level, value...)
-//}
-
 // makeDetails
-func (l *Logger) makeDetails(deep int, level zapcore.Level, value ...interface{}) Details {
+func (l *Logger) makeDetails(deep int, level Level, value ...interface{}) Details {
 	_, file, line, _ := runtime.Caller(deep)
 
 	file = file[PenultimateIndexByteString(file, '/')+1:]
-	lineStr := FormatInt(int64(line))
+	lineStr := strconv.FormatInt(int64(line), 10)
 
 	msgBytes := make([]byte, len(file)+len(lineStr)+1)
 	copy(msgBytes, file)
@@ -234,7 +212,7 @@ func (l *Logger) makeDetails(deep int, level zapcore.Level, value ...interface{}
 	}
 }
 
-type output func(msg string, fields ...zap.Field)
+type output func(msg string)
 
 func With(options ...Option) {
 	logger.with(options...)
@@ -245,8 +223,7 @@ func (l *Logger) with(options ...Option) {
 	l.Options = append(l.Options, options...)
 }
 
-func (l *Logger) withSpan(c context.Context, deep int, level zapcore.Level, output output, value ...interface{}) {
-
+func (l *Logger) withSpan(c context.Context, deep int, level Level, output output, value ...interface{}) {
 	// 构建日志详情结构体
 	detail := l.makeDetails(deep, level, value...)
 	// 遍历options，执行option
@@ -265,113 +242,157 @@ func (l *Logger) withSpan(c context.Context, deep int, level zapcore.Level, outp
 	builder.WriteString(detail.Message)
 
 	output(builder.String())
-	//_ = builder.String()
-	//println(builder.Len())
-
 }
 
-func (l *Logger) CDebug(c context.Context, deep int, args ...interface{}) {
-	if Level > DebugLevel {
+func (l *Logger) log(level Level, deep int, args ...interface{}) {
+	if l.level > level {
 		return
 	}
-	l.withSpan(c, deep, DebugLevel, l.Logger.Debug, args...)
-}
-func (l *Logger) CInfo(c context.Context, deep int, args ...interface{}) {
-	if Level > InfoLevel {
-		return
-	}
-	l.withSpan(c, deep, InfoLevel, l.Logger.Info, args...)
-}
-func (l *Logger) CWarn(c context.Context, deep int, args ...interface{}) {
-	if Level > WarnLevel {
-		return
-	}
-	l.withSpan(c, deep, WarnLevel, l.Logger.Warn, args...)
-}
-func (l *Logger) CError(c context.Context, deep int, args ...interface{}) {
-	if Level > ErrorLevel {
-		return
-	}
-	l.withSpan(c, deep, ErrorLevel, l.Logger.Error, args...)
-}
-func (l *Logger) CDPanic(c context.Context, deep int, args ...interface{}) {
-	if Level > DPanicLevel {
-		return
-	}
-	l.withSpan(c, deep, DPanicLevel, l.Logger.DPanic, args...)
-}
-func (l *Logger) CPanic(c context.Context, deep int, args ...interface{}) {
-	if Level > PanicLevel {
-		return
-	}
-	l.withSpan(c, deep, PanicLevel, l.Logger.Panic, args...)
-}
-func (l *Logger) CFatal(c context.Context, deep int, args ...interface{}) {
-	l.withSpan(c, deep, FatalLevel, l.Logger.Fatal, args...)
+
+	msg := FormatBufferPool(args...)
+	builder := strings.Builder{}
+	builder.Grow(100)
+
+	// 时间
+	builder.WriteString("[")
+	builder.WriteString(time.Now().Format("2006-01-02 - 15:04:05"))
+	builder.WriteString("] ")
+
+	// 级别
+	builder.WriteString("[")
+	builder.WriteString(level.String())
+	builder.WriteString("] ")
+
+	// 调用位置
+	_, file, line, _ := runtime.Caller(deep)
+	file = file[PenultimateIndexByteString(file, '/')+1:]
+	builder.WriteString(file)
+	builder.WriteString(":")
+	builder.WriteString(strconv.FormatInt(int64(line), 10))
+	builder.WriteString(" ")
+
+	// 消息
+	builder.WriteString(msg)
+	builder.WriteString("\n")
+
+	l.writer.Write([]byte(builder.String()))
 }
 
 func (l *Logger) Debug(deep int, args ...interface{}) {
-	l.CDebug(context.Background(), deep, args)
-}
-func (l *Logger) Info(deep int, args ...interface{}) {
-	l.CInfo(context.Background(), deep, args...)
-}
-func (l *Logger) Warn(deep int, args ...interface{}) {
-	l.CWarn(context.Background(), deep, args...)
-}
-func (l *Logger) Error(deep int, args ...interface{}) {
-	l.CError(context.Background(), deep, args...)
-}
-func (l *Logger) DPanic(deep int, args ...interface{}) {
-	l.CDebug(context.Background(), deep, args...)
-}
-func (l *Logger) Panic(deep int, args ...interface{}) {
-	l.CPanic(context.Background(), deep, args...)
-}
-func (l *Logger) Fatal(deep int, args ...interface{}) {
-	l.CFatal(context.Background(), deep, args...)
+	l.log(DebugLevel, deep, args...)
 }
 
+func (l *Logger) Info(deep int, args ...interface{}) {
+	l.log(InfoLevel, deep, args...)
+}
+
+func (l *Logger) Warn(deep int, args ...interface{}) {
+	l.log(WarnLevel, deep, args...)
+}
+
+func (l *Logger) Error(deep int, args ...interface{}) {
+	l.log(ErrorLevel, deep, args...)
+}
+
+func (l *Logger) DPanic(deep int, args ...interface{}) {
+	l.log(DPanicLevel, deep, args...)
+}
+
+func (l *Logger) Panic(deep int, args ...interface{}) {
+	l.log(PanicLevel, deep, args...)
+	panic(FormatBufferPool(args...))
+}
+
+func (l *Logger) Fatal(deep int, args ...interface{}) {
+	l.log(FatalLevel, deep, args...)
+	os.Exit(1)
+}
+
+// Context-aware logging
+func (l *Logger) CDebug(c context.Context, deep int, args ...interface{}) {
+	l.log(DebugLevel, deep, args...)
+}
+
+func (l *Logger) CInfo(c context.Context, deep int, args ...interface{}) {
+	l.log(InfoLevel, deep, args...)
+}
+
+func (l *Logger) CWarn(c context.Context, deep int, args ...interface{}) {
+	l.log(WarnLevel, deep, args...)
+}
+
+func (l *Logger) CError(c context.Context, deep int, args ...interface{}) {
+	l.log(ErrorLevel, deep, args...)
+}
+
+func (l *Logger) CDPanic(c context.Context, deep int, args ...interface{}) {
+	l.log(DPanicLevel, deep, args...)
+}
+
+func (l *Logger) CPanic(c context.Context, deep int, args ...interface{}) {
+	l.log(PanicLevel, deep, args...)
+	panic(FormatBufferPool(args...))
+}
+
+func (l *Logger) CFatal(c context.Context, deep int, args ...interface{}) {
+	l.log(FatalLevel, deep, args...)
+	os.Exit(1)
+}
+
+// Package-level functions
+func Debug(args ...interface{}) {
+	logger.Debug(logDeep, args...)
+}
+
+func Info(args ...interface{}) {
+	logger.Info(logDeep, args...)
+}
+
+func Warn(args ...interface{}) {
+	logger.Warn(logDeep, args...)
+}
+
+func Error(args ...interface{}) {
+	logger.Error(logDeep, args...)
+}
+
+func DPanic(args ...interface{}) {
+	logger.DPanic(logDeep, args...)
+}
+
+func Panic(args ...interface{}) {
+	logger.Panic(logDeep, args...)
+}
+
+func Fatal(args ...interface{}) {
+	logger.Fatal(logDeep, args...)
+}
+
+// Context-aware package-level functions
 func CDebug(c context.Context, args ...interface{}) {
 	logger.CDebug(c, logDeep, args...)
 }
+
 func CInfo(c context.Context, args ...interface{}) {
 	logger.CInfo(c, logDeep, args...)
 }
+
 func CWarn(c context.Context, args ...interface{}) {
 	logger.CWarn(c, logDeep, args...)
 }
+
 func CError(c context.Context, args ...interface{}) {
 	logger.CError(c, logDeep, args...)
 }
-func CPanic(c context.Context, args ...interface{}) {
-	logger.CPanic(c, logDeep, args...)
-}
+
 func CDPanic(c context.Context, args ...interface{}) {
 	logger.CDPanic(c, logDeep, args...)
 }
-func CFatal(c context.Context, args ...interface{}) {
-	logger.CFatal(c, logDeep, args...)
+
+func CPanic(c context.Context, args ...interface{}) {
+	logger.CPanic(c, logDeep, args...)
 }
 
-func Debug(args ...interface{}) {
-	logger.CDebug(context.Background(), logDeep, args...)
-}
-func Info(args ...interface{}) {
-	logger.CInfo(context.Background(), logDeep, args...)
-}
-func Warn(args ...interface{}) {
-	logger.CWarn(context.Background(), logDeep, args...)
-}
-func Error(args ...interface{}) {
-	logger.CError(context.Background(), logDeep, args...)
-}
-func Panic(args ...interface{}) {
-	logger.CPanic(context.Background(), logDeep, args...)
-}
-func DPanic(args ...interface{}) {
-	logger.CDPanic(context.Background(), logDeep, args...)
-}
-func Fatal(args ...interface{}) {
-	logger.CFatal(context.Background(), logDeep, args...)
+func CFatal(c context.Context, args ...interface{}) {
+	logger.CFatal(c, logDeep, args...)
 }

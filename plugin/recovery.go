@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	caolog "github.com/CaoStudio/caolog"
-	"go.uber.org/zap"
 	"net"
 	"os"
 	"runtime/debug"
@@ -29,7 +28,7 @@ func (r *Recovery) WithDeep(deep int) {
 	r.deep = deep
 }
 
-// Recovery recover掉项目可能出现的panic，并使用zap记录相关日志
+// Recovery recover掉项目可能出现的panic，并记录相关日志
 func (r *Recovery) Recovery() {
 	if err := recover(); err != nil {
 		// Check for a broken connection, as it is not really a
@@ -43,10 +42,9 @@ func (r *Recovery) Recovery() {
 			}
 		}
 		if brokenPipe {
-			r.logger.Logger.Error(
-				fmt.Sprintln(
-					zap.Any("error", err),
-				),
+			r.logger.Error(
+				r.deep,
+				fmt.Sprintf("error: %v", err),
 			)
 			// If the connection is dead, we can't write a status to it.
 			return
@@ -54,16 +52,12 @@ func (r *Recovery) Recovery() {
 
 		r.logger.Error(
 			r.deep,
-			fmt.Sprintln(
-				"[Recovery from panic]\n",
-				zap.Any("error", err).String,
-				zap.String("stack", string(debug.Stack())).String,
-			),
+			fmt.Sprintf("[Recovery from panic]\nerror: %v\nstack: %s", err, string(debug.Stack())),
 		)
 	}
 }
 
-// CRecovery recover掉项目可能出现的panic，并使用zap记录相关日志
+// CRecovery recover掉项目可能出现的panic，并记录相关日志
 func (r *Recovery) CRecovery() {
 	if err := recover(); err != nil {
 		// Check for a broken connection, as it is not really a
@@ -77,10 +71,10 @@ func (r *Recovery) CRecovery() {
 			}
 		}
 		if brokenPipe {
-			r.logger.Logger.Error(
-				fmt.Sprintln(
-					zap.Any("error", err),
-				),
+			r.logger.CError(
+				context.Background(),
+				r.deep,
+				fmt.Sprintf("error: %v", err),
 			)
 			// If the connection is dead, we can't write a status to it.
 			return
@@ -89,11 +83,7 @@ func (r *Recovery) CRecovery() {
 		r.logger.CError(
 			context.Background(),
 			r.deep,
-			fmt.Sprintln(
-				"[Recovery from panic]\n",
-				zap.Any("error", err).String,
-				zap.String("stack", string(debug.Stack())).String,
-			),
+			fmt.Sprintf("[Recovery from panic]\nerror: %v\nstack: %s", err, string(debug.Stack())),
 		)
 	}
 }
