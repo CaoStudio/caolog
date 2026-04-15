@@ -2,7 +2,6 @@ package plugin
 
 import (
 	"context"
-	"fmt"
 	caolog "github.com/CaoStudio/caolog"
 	"net"
 	"os"
@@ -42,18 +41,28 @@ func (r *Recovery) Recovery() {
 			}
 		}
 		if brokenPipe {
-			r.logger.Error(
-				r.deep,
-				fmt.Sprintf("error: %v", err),
-			)
+			var builder strings.Builder
+			builder.WriteString("error: ")
+			if e, ok := err.(error); ok {
+				builder.WriteString(e.Error())
+			} else {
+				builder.WriteString(caolog.FormatBufferPool(err))
+			}
+			r.logger.Error(r.deep, builder.String())
 			// If the connection is dead, we can't write a status to it.
 			return
 		}
 
-		r.logger.Error(
-			r.deep,
-			fmt.Sprintf("[Recovery from panic]\nerror: %v\nstack: %s", err, string(debug.Stack())),
-		)
+		var builder strings.Builder
+		builder.WriteString("[Recovery from panic]\nerror: ")
+		if e, ok := err.(error); ok {
+			builder.WriteString(e.Error())
+		} else {
+			builder.WriteString(caolog.FormatBufferPool(err))
+		}
+		builder.WriteString("\nstack: ")
+		builder.WriteString(string(debug.Stack()))
+		r.logger.Error(r.deep, builder.String())
 	}
 }
 
@@ -71,19 +80,27 @@ func (r *Recovery) CRecovery() {
 			}
 		}
 		if brokenPipe {
-			r.logger.CError(
-				context.Background(),
-				r.deep,
-				fmt.Sprintf("error: %v", err),
-			)
+			var builder strings.Builder
+			builder.WriteString("error: ")
+			if e, ok := err.(error); ok {
+				builder.WriteString(e.Error())
+			} else {
+				builder.WriteString(caolog.FormatBufferPool(err))
+			}
+			r.logger.CError(context.Background(), r.deep, builder.String())
 			// If the connection is dead, we can't write a status to it.
 			return
 		}
 
-		r.logger.CError(
-			context.Background(),
-			r.deep,
-			fmt.Sprintf("[Recovery from panic]\nerror: %v\nstack: %s", err, string(debug.Stack())),
-		)
+		var builder strings.Builder
+		builder.WriteString("[Recovery from panic]\nerror: ")
+		if e, ok := err.(error); ok {
+			builder.WriteString(e.Error())
+		} else {
+			builder.WriteString(caolog.FormatBufferPool(err))
+		}
+		builder.WriteString("\nstack: ")
+		builder.WriteString(string(debug.Stack()))
+		r.logger.CError(context.Background(), r.deep, builder.String())
 	}
 }
