@@ -271,7 +271,7 @@ func (l *Logger) log(level Level, deep int, args ...interface{}) {
 	}
 
 	// 使用格式化器格式化日志
-	output := FormatDetails(context.Background(), &details, l.Formatter)
+	output := formatter.FormatDetails(context.Background(), &details, l.Formatter)
 
 	// 写入输出
 	l.writer.Write([]byte(output))
