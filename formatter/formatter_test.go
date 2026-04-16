@@ -71,10 +71,10 @@ func TestJSONFormatterPretty(t *testing.T) {
 func TestJSONFormatterFieldMap(t *testing.T) {
 	formatter := &JSONFormatter{
 		FieldMap: map[string]string{
-			"severity": "level",
+			"severity":  "level",
 			"timestamp": "time",
-			"location": "path",
-			"msg": "message",
+			"location":  "path",
+			"msg":       "message",
 		},
 	}
 	details := &Details{
@@ -172,4 +172,76 @@ func TestJSONFormatterFactory(t *testing.T) {
 	} else if jsonFormatter.Pretty {
 		t.Error("JSONFormatterFactory should set Pretty to false")
 	}
+}
+
+// TestJSONFormatterValueField 测试JSON格式化器的Value字段序列化
+func TestJSONFormatterValueField(t *testing.T) {
+	t.Run("ValueFieldSerialized", func(t *testing.T) {
+		formatter := &JSONFormatter{}
+		details := &Details{
+			Level:   InfoLevel,
+			Path:    "test.go:123",
+			Time:    time.Date(2026, 4, 16, 10, 0, 0, 0, time.UTC),
+			Message: "test message",
+			Value:   []interface{}{"traceID:", "abc123", "extra", 42},
+		}
+
+		result := formatter.Format(context.Background(), details)
+
+		// 验证value字段在输出中
+		if !strings.Contains(result, "\"value\"") {
+			t.Errorf("Expected 'value' field in output, got: %v", result)
+		}
+		// 验证value数组内容
+		if !strings.Contains(result, "traceID:") {
+			t.Errorf("Expected 'traceID:' in value array, got: %v", result)
+		}
+	})
+
+	t.Run("ValueFieldEmpty", func(t *testing.T) {
+		formatter := &JSONFormatter{}
+		details := &Details{
+			Level:   InfoLevel,
+			Path:    "test.go:123",
+			Time:    time.Date(2026, 4, 16, 10, 0, 0, 0, time.UTC),
+			Message: "test message",
+			Value:   []interface{}{},
+		}
+
+		result := formatter.Format(context.Background(), details)
+
+		// 空Value字段不应该出现在输出中
+		if strings.Contains(result, "\"value\"") {
+			t.Errorf("Empty value field should not appear in output, got: %v", result)
+		}
+	})
+
+	t.Run("ValueFieldWithFieldMap", func(t *testing.T) {
+		formatter := &JSONFormatter{
+			FieldMap: map[string]string{
+				"severity":  "level",
+				"timestamp": "time",
+				"location":  "path",
+				"msg":       "message",
+				"extra":     "value",
+			},
+		}
+		details := &Details{
+			Level:   InfoLevel,
+			Path:    "test.go:123",
+			Time:    time.Date(2026, 4, 16, 10, 0, 0, 0, time.UTC),
+			Message: "test message",
+			Value:   []interface{}{"traceID:", "abc123"},
+		}
+
+		result := formatter.Format(context.Background(), details)
+
+		// 验证自定义字段名
+		if !strings.Contains(result, "\"extra\"") {
+			t.Errorf("Expected 'extra' field in output, got: %v", result)
+		}
+		if !strings.Contains(result, "traceID:") {
+			t.Errorf("Expected 'traceID:' in extra array, got: %v", result)
+		}
+	})
 }

@@ -15,9 +15,9 @@ import (
 )
 
 var (
-	logger    *Logger
-	logLevel  formatter.Level
-	writer    io.Writer
+	logger   *Logger
+	logLevel formatter.Level
+	writer   io.Writer
 )
 
 const (

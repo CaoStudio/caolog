@@ -3,19 +3,31 @@ package formatter
 import (
 	"context"
 	"strings"
+	"sync"
 )
 
 // TextFormatter 文本格式化器（默认格式）
 type TextFormatter struct {
 	// 时间格式化模板
 	TimeFormat string
+	once       sync.Once
+}
+
+// NewTextFormatter 创建文本格式化器
+func NewTextFormatter() *TextFormatter {
+	return &TextFormatter{
+		TimeFormat: "2006-01-02 - 15:04:05",
+	}
 }
 
 // Format 实现TextFormatter的格式化方法
 func (f *TextFormatter) Format(ctx context.Context, details *Details) string {
-	if f.TimeFormat == "" {
-		f.TimeFormat = "2006-01-02 - 15:04:05"
-	}
+	// 使用sync.Once确保线程安全地设置默认值
+	f.once.Do(func() {
+		if f.TimeFormat == "" {
+			f.TimeFormat = "2006-01-02 - 15:04:05"
+		}
+	})
 
 	var builder strings.Builder
 	builder.Grow(100)
@@ -43,7 +55,7 @@ func (f *TextFormatter) Format(ctx context.Context, details *Details) string {
 
 // DefaultFormatter 返回默认格式化器（文本格式）
 func DefaultFormatter() Formatter {
-	return &TextFormatter{}
+	return NewTextFormatter()
 }
 
 // FormatDetails 格式化日志详情

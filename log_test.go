@@ -53,9 +53,9 @@ func TestJSONFormatter(t *testing.T) {
 			Time:    time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
 			Message: "test message",
 		}
-		
+
 		output := formatter.Format(context.Background(), &details)
-		
+
 		// 验证输出是有效的JSON
 		if !strings.Contains(output, "\"level\":\"INFO\"") {
 			t.Errorf("Expected JSON to contain level field, got: %s", output)
@@ -76,9 +76,9 @@ func TestTextFormatter(t *testing.T) {
 			Time:    time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
 			Message: "test message",
 		}
-		
+
 		output := formatter.Format(context.Background(), &details)
-		
+
 		// 验证输出格式
 		if !strings.Contains(output, "[INFO]") {
 			t.Errorf("Expected output to contain [INFO], got: %s", output)
@@ -97,17 +97,17 @@ func TestSetFormatter(t *testing.T) {
 	t.Run("SetJSONFormatter", func(t *testing.T) {
 		// 保存原始格式化器
 		originalFormatter := GetLogger().Formatter
-		
+
 		// 设置JSON格式化器
 		jsonFormatter := formatter.JSONFormatterFactory(false)
 		SetFormatter(jsonFormatter)
-		
+
 		// 验证格式化器已设置
 		logger := GetLogger()
 		if logger.Formatter != jsonFormatter {
 			t.Error("Formatter was not set correctly")
 		}
-		
+
 		// 恢复原始格式化器
 		SetFormatter(originalFormatter)
 	})

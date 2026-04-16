@@ -14,6 +14,13 @@ type JSONFormatter struct {
 	FieldMap map[string]string
 }
 
+// NewJSONFormatter 创建JSON格式化器
+func NewJSONFormatter(pretty bool) *JSONFormatter {
+	return &JSONFormatter{
+		Pretty: pretty,
+	}
+}
+
 // Format 实现JSONFormatter的格式化方法
 func (f *JSONFormatter) Format(ctx context.Context, details *Details) string {
 	// 创建JSON结构
@@ -32,6 +39,8 @@ func (f *JSONFormatter) Format(ctx context.Context, details *Details) string {
 				jsonData[key] = details.Path
 			case "message":
 				jsonData[key] = details.Message
+			case "value":
+				jsonData[key] = details.Value
 			}
 		}
 	} else {
@@ -40,6 +49,10 @@ func (f *JSONFormatter) Format(ctx context.Context, details *Details) string {
 		jsonData["time"] = details.Time.Format(time.RFC3339)
 		jsonData["path"] = details.Path
 		jsonData["message"] = details.Message
+		// 如果Value非空，也包含value字段
+		if len(details.Value) > 0 {
+			jsonData["value"] = details.Value
+		}
 	}
 
 	// 序列化为JSON
@@ -52,7 +65,8 @@ func (f *JSONFormatter) Format(ctx context.Context, details *Details) string {
 	}
 
 	if err != nil {
-		return "{\"error\":\"JSON marshal failed: " + err.Error() + "\"}\n"
+		// JSON序列化失败，返回空字符串
+		return ""
 	}
 
 	return string(output) + "\n"
@@ -60,5 +74,5 @@ func (f *JSONFormatter) Format(ctx context.Context, details *Details) string {
 
 // JSONFormatterFactory 创建JSON格式化器
 func JSONFormatterFactory(pretty bool) Formatter {
-	return &JSONFormatter{Pretty: pretty}
+	return NewJSONFormatter(pretty)
 }

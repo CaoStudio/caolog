@@ -39,14 +39,14 @@ func TestLevelString(t *testing.T) {
 func TestNewLogger(t *testing.T) {
 	var buf bytes.Buffer
 	logger := NewLogger(&buf, DebugLevel)
-	
+
 	if logger.writer != &buf {
 		t.Error("Logger writer not set correctly")
 	}
 	if logger.level != DebugLevel {
 		t.Errorf("Expected level DebugLevel, got %v", logger.level)
 	}
-	
+
 	// 测试nil writer处理
 	loggerNil := NewLogger(nil, InfoLevel)
 	if loggerNil.writer != os.Stdout {
@@ -58,7 +58,7 @@ func TestNewLogger(t *testing.T) {
 func TestWithLevel(t *testing.T) {
 	var buf bytes.Buffer
 	logger := NewLogger(&buf, DebugLevel)
-	
+
 	newLogger := logger.WithLevel(InfoLevel)
 	if newLogger.level != InfoLevel {
 		t.Errorf("Expected level InfoLevel, got %v", newLogger.level)
@@ -73,7 +73,7 @@ func TestWithWriter(t *testing.T) {
 	var buf1 bytes.Buffer
 	var buf2 bytes.Buffer
 	logger := NewLogger(&buf1, DebugLevel)
-	
+
 	newLogger := logger.WithWriter(&buf2)
 	if newLogger.writer != &buf2 {
 		t.Error("Writer not set correctly in new logger")
@@ -87,7 +87,7 @@ func TestWithWriter(t *testing.T) {
 func TestLoggerDebug(t *testing.T) {
 	var buf bytes.Buffer
 	logger := NewLogger(&buf, DebugLevel)
-	
+
 	event := logger.Debug()
 	if event.level != DebugLevel {
 		t.Errorf("Expected DebugLevel, got %v", event.level)
@@ -101,7 +101,7 @@ func TestLoggerDebug(t *testing.T) {
 func TestLoggerInfo(t *testing.T) {
 	var buf bytes.Buffer
 	logger := NewLogger(&buf, DebugLevel)
-	
+
 	event := logger.Info()
 	if event.level != InfoLevel {
 		t.Errorf("Expected InfoLevel, got %v", event.level)
@@ -112,7 +112,7 @@ func TestLoggerInfo(t *testing.T) {
 func TestLoggerWarn(t *testing.T) {
 	var buf bytes.Buffer
 	logger := NewLogger(&buf, DebugLevel)
-	
+
 	event := logger.Warn()
 	if event.level != WarnLevel {
 		t.Errorf("Expected WarnLevel, got %v", event.level)
@@ -123,7 +123,7 @@ func TestLoggerWarn(t *testing.T) {
 func TestLoggerError(t *testing.T) {
 	var buf bytes.Buffer
 	logger := NewLogger(&buf, DebugLevel)
-	
+
 	event := logger.Error()
 	if event.level != ErrorLevel {
 		t.Errorf("Expected ErrorLevel, got %v", event.level)
@@ -134,14 +134,14 @@ func TestLoggerError(t *testing.T) {
 func TestLoggerErr(t *testing.T) {
 	var buf bytes.Buffer
 	logger := NewLogger(&buf, DebugLevel)
-	
+
 	// 测试非nil错误
 	err := errors.New("test error")
 	event := logger.Err(err)
 	if event.level != ErrorLevel {
 		t.Errorf("Expected ErrorLevel for non-nil error, got %v", event.level)
 	}
-	
+
 	// 测试nil错误
 	eventNil := logger.Err(nil)
 	if eventNil.level != InfoLevel {
@@ -160,7 +160,7 @@ func TestLoggerFatal(t *testing.T) {
 func TestLoggerPanic(t *testing.T) {
 	var buf bytes.Buffer
 	logger := NewLogger(&buf, DebugLevel)
-	
+
 	event := logger.Panic()
 	if event.level != PanicLevel {
 		t.Errorf("Expected PanicLevel, got %v", event.level)
@@ -174,10 +174,10 @@ func TestLoggerPanic(t *testing.T) {
 func TestEventMsg(t *testing.T) {
 	var buf bytes.Buffer
 	logger := NewLogger(&buf, DebugLevel)
-	
+
 	event := logger.Info()
 	event.Msg("test message")
-	
+
 	output := buf.String()
 	if !strings.Contains(output, "test message") {
 		t.Errorf("Expected 'test message' in output, got: %v", output)
@@ -191,14 +191,14 @@ func TestEventMsg(t *testing.T) {
 func TestEventMsgLevelFiltering(t *testing.T) {
 	var buf bytes.Buffer
 	logger := NewLogger(&buf, InfoLevel) // 只记录Info及以上级别
-	
+
 	// Debug级别应该被过滤
 	event := logger.Debug()
 	event.Msg("should not appear")
 	if strings.Contains(buf.String(), "should not appear") {
 		t.Error("Debug log should be filtered when level is InfoLevel")
 	}
-	
+
 	// Info级别应该出现
 	buf.Reset()
 	event = logger.Info()
@@ -212,11 +212,11 @@ func TestEventMsgLevelFiltering(t *testing.T) {
 func TestEventErr(t *testing.T) {
 	var buf bytes.Buffer
 	logger := NewLogger(&buf, DebugLevel)
-	
+
 	err := errors.New("test error")
 	event := logger.Error()
 	event.Err(err).Msg("error occurred")
-	
+
 	output := buf.String()
 	if !strings.Contains(output, "error") || !strings.Contains(output, "test error") {
 		t.Errorf("Expected error field in output, got: %v", output)
@@ -227,10 +227,10 @@ func TestEventErr(t *testing.T) {
 func TestEventStr(t *testing.T) {
 	var buf bytes.Buffer
 	logger := NewLogger(&buf, DebugLevel)
-	
+
 	event := logger.Info()
 	event.Str("key", "value").Msg("test")
-	
+
 	output := buf.String()
 	if !strings.Contains(output, "key=value") {
 		t.Errorf("Expected 'key=value' in output, got: %v", output)
@@ -241,10 +241,10 @@ func TestEventStr(t *testing.T) {
 func TestEventInt(t *testing.T) {
 	var buf bytes.Buffer
 	logger := NewLogger(&buf, DebugLevel)
-	
+
 	event := logger.Info()
 	event.Int("count", 42).Msg("test")
-	
+
 	output := buf.String()
 	if !strings.Contains(output, "count=42") {
 		t.Errorf("Expected 'count=42' in output, got: %v", output)
@@ -255,10 +255,10 @@ func TestEventInt(t *testing.T) {
 func TestEventBool(t *testing.T) {
 	var buf bytes.Buffer
 	logger := NewLogger(&buf, DebugLevel)
-	
+
 	event := logger.Info()
 	event.Bool("active", true).Msg("test")
-	
+
 	output := buf.String()
 	if !strings.Contains(output, "active=true") {
 		t.Errorf("Expected 'active=true' in output, got: %v", output)
@@ -269,10 +269,10 @@ func TestEventBool(t *testing.T) {
 func TestEventFloat64(t *testing.T) {
 	var buf bytes.Buffer
 	logger := NewLogger(&buf, DebugLevel)
-	
+
 	event := logger.Info()
 	event.Float64("pi", 3.14159).Msg("test")
-	
+
 	output := buf.String()
 	if !strings.Contains(output, "pi=3.14159") {
 		t.Errorf("Expected 'pi=3.14159' in output, got: %v", output)
@@ -283,10 +283,10 @@ func TestEventFloat64(t *testing.T) {
 func TestEventFloat32(t *testing.T) {
 	var buf bytes.Buffer
 	logger := NewLogger(&buf, DebugLevel)
-	
+
 	event := logger.Info()
 	event.Float32("value", 3.14).Msg("test")
-	
+
 	output := buf.String()
 	if !strings.Contains(output, "value=3.14") {
 		t.Errorf("Expected 'value=3.14' in output, got: %v", output)
@@ -297,10 +297,10 @@ func TestEventFloat32(t *testing.T) {
 func TestEventInt32(t *testing.T) {
 	var buf bytes.Buffer
 	logger := NewLogger(&buf, DebugLevel)
-	
+
 	event := logger.Info()
 	event.Int32("value", 2147483647).Msg("test")
-	
+
 	output := buf.String()
 	if !strings.Contains(output, "value=2147483647") {
 		t.Errorf("Expected 'value=2147483647' in output, got: %v", output)
@@ -311,10 +311,10 @@ func TestEventInt32(t *testing.T) {
 func TestEventInt64(t *testing.T) {
 	var buf bytes.Buffer
 	logger := NewLogger(&buf, DebugLevel)
-	
+
 	event := logger.Info()
 	event.Int64("value", 9223372036854775807).Msg("test")
-	
+
 	output := buf.String()
 	if !strings.Contains(output, "value=9223372036854775807") {
 		t.Errorf("Expected 'value=9223372036854775807' in output, got: %v", output)
@@ -325,10 +325,10 @@ func TestEventInt64(t *testing.T) {
 func TestEventUint(t *testing.T) {
 	var buf bytes.Buffer
 	logger := NewLogger(&buf, DebugLevel)
-	
+
 	event := logger.Info()
 	event.Uint("value", 42).Msg("test")
-	
+
 	output := buf.String()
 	if !strings.Contains(output, "value=42") {
 		t.Errorf("Expected 'value=42' in output, got: %v", output)
@@ -339,10 +339,10 @@ func TestEventUint(t *testing.T) {
 func TestEventUint32(t *testing.T) {
 	var buf bytes.Buffer
 	logger := NewLogger(&buf, DebugLevel)
-	
+
 	event := logger.Info()
 	event.Uint32("value", 4294967295).Msg("test")
-	
+
 	output := buf.String()
 	if !strings.Contains(output, "value=4294967295") {
 		t.Errorf("Expected 'value=4294967295' in output, got: %v", output)
@@ -353,10 +353,10 @@ func TestEventUint32(t *testing.T) {
 func TestEventUint64(t *testing.T) {
 	var buf bytes.Buffer
 	logger := NewLogger(&buf, DebugLevel)
-	
+
 	event := logger.Info()
 	event.Uint64("value", 18446744073709551615).Msg("test")
-	
+
 	output := buf.String()
 	if !strings.Contains(output, "value=18446744073709551615") {
 		t.Errorf("Expected 'value=18446744073709551615' in output, got: %v", output)
@@ -367,10 +367,10 @@ func TestEventUint64(t *testing.T) {
 func TestEventDur(t *testing.T) {
 	var buf bytes.Buffer
 	logger := NewLogger(&buf, DebugLevel)
-	
+
 	event := logger.Info()
 	event.Dur("duration", 5*time.Second).Msg("test")
-	
+
 	output := buf.String()
 	if !strings.Contains(output, "duration=") {
 		t.Errorf("Expected 'duration=' in output, got: %v", output)
@@ -381,10 +381,10 @@ func TestEventDur(t *testing.T) {
 func TestEventAny(t *testing.T) {
 	var buf bytes.Buffer
 	logger := NewLogger(&buf, DebugLevel)
-	
+
 	event := logger.Info()
 	event.Any("data", map[string]interface{}{"key": "value"}).Msg("test")
-	
+
 	output := buf.String()
 	if !strings.Contains(output, "data=") {
 		t.Errorf("Expected 'data=' in output, got: %v", output)
@@ -395,10 +395,10 @@ func TestEventAny(t *testing.T) {
 func TestEventTime(t *testing.T) {
 	var buf bytes.Buffer
 	logger := NewLogger(&buf, DebugLevel)
-	
+
 	event := logger.Info()
 	event.Time("timestamp", time.Now()).Msg("test")
-	
+
 	output := buf.String()
 	if !strings.Contains(output, "timestamp=") {
 		t.Errorf("Expected 'timestamp=' in output, got: %v", output)
@@ -409,13 +409,13 @@ func TestEventTime(t *testing.T) {
 func TestEventMultipleFields(t *testing.T) {
 	var buf bytes.Buffer
 	logger := NewLogger(&buf, DebugLevel)
-	
+
 	event := logger.Info()
 	event.Str("user", "john").
 		Int("age", 30).
 		Bool("active", true).
 		Msg("user logged in")
-	
+
 	output := buf.String()
 	if !strings.Contains(output, "user=john") {
 		t.Errorf("Expected 'user=john' in output, got: %v", output)
@@ -436,35 +436,35 @@ func TestPackageLevelFunctions(t *testing.T) {
 	var buf bytes.Buffer
 	WithWriter(&buf)
 	WithLevel(DebugLevel)
-	
+
 	// 测试Debug
 	buf.Reset()
 	Debug().Msg("debug test")
 	if !strings.Contains(buf.String(), "DEBUG") {
 		t.Error("Debug function should work")
 	}
-	
+
 	// 测试Info
 	buf.Reset()
 	Info().Msg("info test")
 	if !strings.Contains(buf.String(), "INFO") {
 		t.Error("Info function should work")
 	}
-	
+
 	// 测试Warn
 	buf.Reset()
 	Warn().Msg("warn test")
 	if !strings.Contains(buf.String(), "WARN") {
 		t.Error("Warn function should work")
 	}
-	
+
 	// 测试Error
 	buf.Reset()
 	Error().Msg("error test")
 	if !strings.Contains(buf.String(), "ERROR") {
 		t.Error("Error function should work")
 	}
-	
+
 	// 测试Err
 	buf.Reset()
 	Err(errors.New("test error")).Msg("error occurred")
@@ -477,9 +477,9 @@ func TestPackageLevelFunctions(t *testing.T) {
 func TestWithLogger(t *testing.T) {
 	var buf bytes.Buffer
 	logger := NewLogger(&buf, InfoLevel)
-	
+
 	WithLogger(logger)
-	
+
 	// 验证全局logger被设置
 	// 注意：由于logger是包级变量，我们需要通过包级函数验证
 	Info().Msg("test")
@@ -493,14 +493,14 @@ func TestPackageLevelWithLevel(t *testing.T) {
 	var buf bytes.Buffer
 	WithWriter(&buf)
 	WithLevel(DebugLevel)
-	
+
 	// 测试级别过滤
 	buf.Reset()
 	Debug().Msg("debug test")
 	if !strings.Contains(buf.String(), "debug test") {
 		t.Error("Debug should appear when level is DebugLevel")
 	}
-	
+
 	// 改变级别
 	WithLevel(InfoLevel)
 	buf.Reset()
@@ -514,13 +514,13 @@ func TestPackageLevelWithLevel(t *testing.T) {
 func TestPackageLevelWithWriter(t *testing.T) {
 	var buf1 bytes.Buffer
 	var buf2 bytes.Buffer
-	
+
 	WithWriter(&buf1)
 	Info().Msg("test1")
 	if !strings.Contains(buf1.String(), "test1") {
 		t.Error("First writer should receive log")
 	}
-	
+
 	WithWriter(&buf2)
 	Info().Msg("test2")
 	if !strings.Contains(buf2.String(), "test2") {
@@ -539,7 +539,7 @@ func TestGetValue(t *testing.T) {
 		expected string
 	}{
 		{"float64", 3.14, "3.14"},
-		{"float32", float32(3.14), "3.140000104904175"},  // float32转换为float64会有精度损失
+		{"float32", float32(3.14), "3.140000104904175"}, // float32转换为float64会有精度损失
 		{"int", 42, "42"},
 		{"uint", uint(42), "42"},
 		{"int8", int8(127), "127"},
@@ -585,10 +585,10 @@ func TestPenultimateIndexByteString(t *testing.T) {
 		char     byte
 		expected int
 	}{
-		{"Simple", "hello/world/test.go", '/', 5},  // 倒数第二个 '/' 在索引 5
+		{"Simple", "hello/world/test.go", '/', 5}, // 倒数第二个 '/' 在索引 5
 		{"NoMatch", "hello", '/', -1},
-		{"SingleMatch", "test/", '/', -1},  // 只有一个 '/'，应该返回 -1
-		{"MultipleMatches", "a/b/c/d", '/', 3},  // 倒数第二个 '/' 在索引 3
+		{"SingleMatch", "test/", '/', -1},      // 只有一个 '/'，应该返回 -1
+		{"MultipleMatches", "a/b/c/d", '/', 3}, // 倒数第二个 '/' 在索引 3
 		{"EmptyString", "", '/', -1},
 	}
 
@@ -606,11 +606,11 @@ func TestPenultimateIndexByteString(t *testing.T) {
 func TestEventOutput(t *testing.T) {
 	var buf bytes.Buffer
 	logger := NewLogger(&buf, DebugLevel)
-	
+
 	event := logger.Info()
 	event.msg = "test message"
 	event.output()
-	
+
 	output := buf.String()
 	if !strings.Contains(output, "INFO") {
 		t.Errorf("Expected INFO in output, got: %v", output)
@@ -629,7 +629,7 @@ func TestEventOutput(t *testing.T) {
 func TestEventMsgWithExit(t *testing.T) {
 	var buf bytes.Buffer
 	logger := NewLogger(&buf, DebugLevel)
-	
+
 	exitCalled := false
 	exitFunc := func(msg string) {
 		exitCalled = true
@@ -637,14 +637,14 @@ func TestEventMsgWithExit(t *testing.T) {
 			t.Errorf("Expected 'panic message', got: %v", msg)
 		}
 	}
-	
+
 	event := &Event{
 		logger: logger,
 		level:  PanicLevel,
 		msg:    "panic message",
 		exit:   exitFunc,
 	}
-	
+
 	// 调用Msg，应该触发exit函数
 	event.Msg("panic message")
 	if !exitCalled {

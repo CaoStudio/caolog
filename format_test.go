@@ -94,7 +94,7 @@ func TestFormatUintEdgeCases(t *testing.T) {
 			t.Errorf("FormatUint(%d) = %v, want %v", i, result, expected)
 		}
 	}
-	
+
 	// 测试100的倍数
 	for i := uint64(100); i <= 1000; i += 100 {
 		result := FormatUint(i)
@@ -115,7 +115,7 @@ func TestFormatIntEdgeCases(t *testing.T) {
 			t.Errorf("FormatInt(%d) = %v, want %v", i, result, expected)
 		}
 	}
-	
+
 	// 测试100的倍数
 	for i := int64(-1000); i <= 1000; i += 100 {
 		result := FormatInt(i)
@@ -129,7 +129,7 @@ func TestFormatIntEdgeCases(t *testing.T) {
 // TestFormatUintPerformance 测试FormatUint性能（与标准库比较）
 func TestFormatUintPerformance(t *testing.T) {
 	testValues := []uint64{0, 1, 10, 100, 1000, 10000, 100000, 1000000, 4294967295, 18446744073709551615}
-	
+
 	for _, val := range testValues {
 		result := FormatUint(val)
 		expected := strconv.FormatUint(val, 10)
@@ -142,7 +142,7 @@ func TestFormatUintPerformance(t *testing.T) {
 // TestFormatIntPerformance 测试FormatInt性能（与标准库比较）
 func TestFormatIntPerformance(t *testing.T) {
 	testValues := []int64{0, 1, -1, 10, -10, 100, -100, 1000, -1000, 2147483647, -2147483648, 9223372036854775807, -9223372036854775808}
-	
+
 	for _, val := range testValues {
 		result := FormatInt(val)
 		expected := strconv.FormatInt(val, 10)

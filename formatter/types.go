@@ -11,7 +11,7 @@ type Details struct {
 	Path    string        `json:"path,omitempty"`
 	Time    time.Time     `json:"time,omitempty"`
 	Message string        `json:"message,omitempty"`
-	Value   []interface{} `json:"-"`
+	Value   []interface{} `json:"value,omitempty"`
 }
 
 // Level 日志级别

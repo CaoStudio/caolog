@@ -16,9 +16,9 @@ func TestNewCommonLogger(t *testing.T) {
 		level:     DebugLevel,
 		Formatter: formatter.DefaultFormatter(),
 	}
-	
+
 	commonLogger := NewCommonLogger(logger)
-	
+
 	// 验证CommonLogger包含Logger
 	if commonLogger.Logger.writer != logger.writer {
 		t.Error("CommonLogger should contain the same logger")
@@ -36,10 +36,10 @@ func TestCommonLoggerDebug(t *testing.T) {
 		level:     DebugLevel,
 		Formatter: formatter.DefaultFormatter(),
 	}
-	
+
 	commonLogger := NewCommonLogger(logger)
 	commonLogger.Debug("debug test")
-	
+
 	output := buf.String()
 	if !strings.Contains(output, "DEBUG") {
 		t.Errorf("Expected DEBUG in output, got: %v", output)
@@ -57,10 +57,10 @@ func TestCommonLoggerInfo(t *testing.T) {
 		level:     DebugLevel,
 		Formatter: formatter.DefaultFormatter(),
 	}
-	
+
 	commonLogger := NewCommonLogger(logger)
 	commonLogger.Info("info test")
-	
+
 	output := buf.String()
 	if !strings.Contains(output, "INFO") {
 		t.Errorf("Expected INFO in output, got: %v", output)
@@ -75,10 +75,10 @@ func TestCommonLoggerWarn(t *testing.T) {
 		level:     DebugLevel,
 		Formatter: formatter.DefaultFormatter(),
 	}
-	
+
 	commonLogger := NewCommonLogger(logger)
 	commonLogger.Warn("warn test")
-	
+
 	output := buf.String()
 	if !strings.Contains(output, "WARN") {
 		t.Errorf("Expected WARN in output, got: %v", output)
@@ -93,10 +93,10 @@ func TestCommonLoggerError(t *testing.T) {
 		level:     DebugLevel,
 		Formatter: formatter.DefaultFormatter(),
 	}
-	
+
 	commonLogger := NewCommonLogger(logger)
 	commonLogger.Error("error test")
-	
+
 	output := buf.String()
 	if !strings.Contains(output, "ERROR") {
 		t.Errorf("Expected ERROR in output, got: %v", output)
@@ -111,10 +111,10 @@ func TestCommonLoggerDPanic(t *testing.T) {
 		level:     DebugLevel,
 		Formatter: formatter.DefaultFormatter(),
 	}
-	
+
 	commonLogger := NewCommonLogger(logger)
 	commonLogger.DPanic("dpanic test")
-	
+
 	output := buf.String()
 	if !strings.Contains(output, "DPANIC") {
 		t.Errorf("Expected DPANIC in output, got: %v", output)
@@ -129,15 +129,15 @@ func TestCommonLoggerPanic(t *testing.T) {
 		level:     DebugLevel,
 		Formatter: formatter.DefaultFormatter(),
 	}
-	
+
 	commonLogger := NewCommonLogger(logger)
-	
+
 	defer func() {
 		if r := recover(); r == nil {
 			t.Error("Expected panic, but didn't get one")
 		}
 	}()
-	
+
 	commonLogger.Panic("panic test")
 }
 
@@ -157,18 +157,18 @@ func TestCommonLoggerMultipleCalls(t *testing.T) {
 		level:     DebugLevel,
 		Formatter: formatter.DefaultFormatter(),
 	}
-	
+
 	commonLogger := NewCommonLogger(logger)
-	
+
 	// 多次调用不同方法
 	commonLogger.Debug("debug1")
 	commonLogger.Info("info1")
 	commonLogger.Warn("warn1")
 	commonLogger.Error("error1")
 	commonLogger.DPanic("dpanic1")
-	
+
 	output := buf.String()
-	
+
 	// 验证所有日志级别都出现了
 	if !strings.Contains(output, "DEBUG") {
 		t.Error("DEBUG should appear in output")
@@ -195,16 +195,16 @@ func TestCommonLoggerLevelFiltering(t *testing.T) {
 		level:     InfoLevel, // 只记录Info及以上级别
 		Formatter: formatter.DefaultFormatter(),
 	}
-	
+
 	commonLogger := NewCommonLogger(logger)
-	
+
 	// Debug级别应该被过滤
 	buf.Reset()
 	commonLogger.Debug("should not appear")
 	if strings.Contains(buf.String(), "should not appear") {
 		t.Error("Debug log should be filtered when level is InfoLevel")
 	}
-	
+
 	// Info级别应该出现
 	buf.Reset()
 	commonLogger.Info("should appear")
@@ -221,10 +221,10 @@ func TestCommonLoggerWithMultipleValues(t *testing.T) {
 		level:     DebugLevel,
 		Formatter: formatter.DefaultFormatter(),
 	}
-	
+
 	commonLogger := NewCommonLogger(logger)
 	commonLogger.Info("value1", "value2", 123, 456.789)
-	
+
 	output := buf.String()
 	if !strings.Contains(output, "value1") || !strings.Contains(output, "value2") ||
 		!strings.Contains(output, "123") || !strings.Contains(output, "456.789") {

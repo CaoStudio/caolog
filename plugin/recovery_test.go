@@ -16,7 +16,7 @@ func TestNewRecovery(t *testing.T) {
 	var buf bytes.Buffer
 	caolog.InitLogger(caolog.DebugLevel)
 	caolog.SetWriter(&buf)
-	
+
 	logger := caolog.GetLogger()
 	recovery := NewRecovery(*logger)
 	if recovery.deep != 4 {
@@ -29,7 +29,7 @@ func TestWithDeep(t *testing.T) {
 	var buf bytes.Buffer
 	caolog.InitLogger(caolog.DebugLevel)
 	caolog.SetWriter(&buf)
-	
+
 	logger := caolog.GetLogger()
 	recovery := NewRecovery(*logger)
 	recovery.WithDeep(5)
@@ -43,16 +43,16 @@ func TestRecoveryNormal(t *testing.T) {
 	var buf bytes.Buffer
 	caolog.InitLogger(caolog.DebugLevel)
 	caolog.SetWriter(&buf)
-	
+
 	logger := caolog.GetLogger()
 	recovery := NewRecovery(*logger)
-	
+
 	// 模拟panic并恢复
 	func() {
 		defer recovery.Recovery()
 		panic("test panic")
 	}()
-	
+
 	// 验证日志被记录
 	output := buf.String()
 	if !strings.Contains(output, "Recovery from panic") {
@@ -68,21 +68,21 @@ func TestRecoveryBrokenPipe(t *testing.T) {
 	var buf bytes.Buffer
 	caolog.InitLogger(caolog.DebugLevel)
 	caolog.SetWriter(&buf)
-	
+
 	logger := caolog.GetLogger()
 	recovery := NewRecovery(*logger)
-	
+
 	// 模拟broken pipe错误
 	opError := &net.OpError{
 		Op:  "write",
 		Err: &os.SyscallError{Err: errors.New("broken pipe")},
 	}
-	
+
 	func() {
 		defer recovery.Recovery()
 		panic(opError)
 	}()
-	
+
 	// 验证日志被记录
 	output := buf.String()
 	if !strings.Contains(output, "error:") {
@@ -98,21 +98,21 @@ func TestRecoveryConnectionReset(t *testing.T) {
 	var buf bytes.Buffer
 	caolog.InitLogger(caolog.DebugLevel)
 	caolog.SetWriter(&buf)
-	
+
 	logger := caolog.GetLogger()
 	recovery := NewRecovery(*logger)
-	
+
 	// 模拟connection reset错误
 	opError := &net.OpError{
 		Op:  "write",
 		Err: &os.SyscallError{Err: errors.New("connection reset by peer")},
 	}
-	
+
 	func() {
 		defer recovery.Recovery()
 		panic(opError)
 	}()
-	
+
 	// 验证日志被记录
 	output := buf.String()
 	if !strings.Contains(output, "error:") {
@@ -128,28 +128,28 @@ func TestRecoveryErrorType(t *testing.T) {
 	var buf bytes.Buffer
 	caolog.InitLogger(caolog.DebugLevel)
 	caolog.SetWriter(&buf)
-	
+
 	logger := caolog.GetLogger()
 	recovery := NewRecovery(*logger)
-	
+
 	// 测试error类型
 	func() {
 		defer recovery.Recovery()
 		panic(errors.New("test error"))
 	}()
-	
+
 	output := buf.String()
 	if !strings.Contains(output, "test error") {
 		t.Errorf("Expected 'test error' in log, got: %v", output)
 	}
-	
+
 	// 测试string类型
 	buf.Reset()
 	func() {
 		defer recovery.Recovery()
 		panic("string panic")
 	}()
-	
+
 	output = buf.String()
 	if !strings.Contains(output, "string panic") {
 		t.Errorf("Expected 'string panic' in log, got: %v", output)
@@ -161,16 +161,16 @@ func TestCRecoveryNormal(t *testing.T) {
 	var buf bytes.Buffer
 	caolog.InitLogger(caolog.DebugLevel)
 	caolog.SetWriter(&buf)
-	
+
 	logger := caolog.GetLogger()
 	recovery := NewRecovery(*logger)
-	
+
 	// 模拟panic并恢复
 	func() {
 		defer recovery.CRecovery()
 		panic("test panic")
 	}()
-	
+
 	// 验证日志被记录
 	output := buf.String()
 	if !strings.Contains(output, "Recovery from panic") {
@@ -186,21 +186,21 @@ func TestCRecoveryBrokenPipe(t *testing.T) {
 	var buf bytes.Buffer
 	caolog.InitLogger(caolog.DebugLevel)
 	caolog.SetWriter(&buf)
-	
+
 	logger := caolog.GetLogger()
 	recovery := NewRecovery(*logger)
-	
+
 	// 模拟broken pipe错误
 	opError := &net.OpError{
 		Op:  "write",
 		Err: &os.SyscallError{Err: errors.New("broken pipe")},
 	}
-	
+
 	func() {
 		defer recovery.CRecovery()
 		panic(opError)
 	}()
-	
+
 	// 验证日志被记录
 	output := buf.String()
 	if !strings.Contains(output, "error:") {
@@ -216,17 +216,17 @@ func TestRecoveryWithDifferentDeep(t *testing.T) {
 	var buf bytes.Buffer
 	caolog.InitLogger(caolog.DebugLevel)
 	caolog.SetWriter(&buf)
-	
+
 	logger := caolog.GetLogger()
 	recovery := NewRecovery(*logger)
 	recovery.WithDeep(2)
-	
+
 	// 模拟panic并恢复
 	func() {
 		defer recovery.Recovery()
 		panic("test panic")
 	}()
-	
+
 	// 验证日志被记录
 	output := buf.String()
 	if !strings.Contains(output, "Recovery from panic") {
@@ -239,16 +239,16 @@ func TestRecoveryNoPanic(t *testing.T) {
 	var buf bytes.Buffer
 	caolog.InitLogger(caolog.DebugLevel)
 	caolog.SetWriter(&buf)
-	
+
 	logger := caolog.GetLogger()
 	recovery := NewRecovery(*logger)
-	
+
 	// 没有panic
 	func() {
 		defer recovery.Recovery()
 		// 正常执行
 	}()
-	
+
 	// 验证没有日志被记录
 	output := buf.String()
 	if output != "" {
@@ -261,16 +261,16 @@ func TestCRecoveryNoPanic(t *testing.T) {
 	var buf bytes.Buffer
 	caolog.InitLogger(caolog.DebugLevel)
 	caolog.SetWriter(&buf)
-	
+
 	logger := caolog.GetLogger()
 	recovery := NewRecovery(*logger)
-	
+
 	// 没有panic
 	func() {
 		defer recovery.CRecovery()
 		// 正常执行
 	}()
-	
+
 	// 验证没有日志被记录
 	output := buf.String()
 	if output != "" {
