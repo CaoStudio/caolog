@@ -43,6 +43,11 @@ func FormatInt(n int64) string {
 	i := 11
 	negative := n>>63&1 == 1
 	if negative {
+		// Handle MinInt64 specially to avoid overflow
+		if n == -9223372036854775808 {
+			// Manually construct the string for MinInt64
+			return "-9223372036854775808"
+		}
 		n = n * -1
 	}
 	for n >= 100 {

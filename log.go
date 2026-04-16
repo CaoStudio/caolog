@@ -10,12 +10,14 @@ import (
 	"strings"
 	"time"
 	"unsafe"
+
+	"github.com/CaoStudio/caolog/formatter"
 )
 
 var (
-	logger *Logger
-	logLevel Level
-	writer io.Writer
+	logger    *Logger
+	logLevel  formatter.Level
+	writer    io.Writer
 )
 
 const (
@@ -24,7 +26,7 @@ const (
 )
 
 // Level 日志级别
-type Level int8
+type Level = formatter.Level
 
 const (
 	DebugLevel  Level = -1
@@ -46,40 +48,34 @@ var levelStrings = map[Level]string{
 	FatalLevel:  "FATAL",
 }
 
-func (l Level) String() string {
-	if l < DebugLevel || l > FatalLevel {
-		return "UNKNOWN"
-	}
-	return levelStrings[l]
-}
-
-func (l Level) CapitalString() string {
-	return l.String()
-}
-
 type (
 	Logger struct {
-		writer  io.Writer
-		level   Level
-		Options []Option
+		writer    io.Writer
+		level     Level
+		Options   []Option
+		Formatter formatter.Formatter
 	}
 
-	Details struct {
-		Level   Level       `json:"level,omitempty"`
-		Path    string      `json:"path,omitempty"`
-		Time    time.Time   `json:"time,omitempty"`
-		Message string      `json:"message,omitempty"`
-		Value   []interface{} `json:"-"`
-	}
+	Details = formatter.Details
 )
 
-type Option func(ctx context.Context, details *Details)
+// Formatter 接口定义日志格式化器
+type Formatter = formatter.Formatter
+
+// TextFormatter 文本格式化器（默认格式）
+type TextFormatter = formatter.TextFormatter
+
+// JSONFormatter JSON格式化器
+type JSONFormatter = formatter.JSONFormatter
+
+type Option func(ctx context.Context, details *formatter.Details)
 
 func init() {
 	logLevel = DebugLevel
 	logger = &Logger{
-		writer: os.Stdout,
-		level:  DebugLevel,
+		writer:    os.Stdout,
+		level:     DebugLevel,
+		Formatter: formatter.DefaultFormatter(),
 	}
 }
 
@@ -88,9 +84,10 @@ func init() {
 func InitLogger(level Level, options ...Option) {
 	logLevel = level
 	logger = &Logger{
-		writer:  os.Stdout,
-		level:   level,
-		Options: make([]Option, 0),
+		writer:    os.Stdout,
+		level:     level,
+		Options:   make([]Option, 0),
+		Formatter: formatter.DefaultFormatter(),
 	}
 	if len(options) > 0 {
 		logger.with(options...)
@@ -168,7 +165,7 @@ func FormatBufferPool[t any](value ...t) string {
 	builder.Grow(bufferLen + len(value) - 1)
 	for index, v := range cache {
 		builder.WriteString(v)
-		if index <= len(value)-1 {
+		if index < len(value)-1 {
 			builder.WriteString("\t")
 		}
 	}
@@ -218,6 +215,11 @@ func With(options ...Option) {
 	logger.with(options...)
 }
 
+// SetFormatter 设置日志格式化器
+func SetFormatter(formatter Formatter) {
+	logger.Formatter = formatter
+}
+
 // With
 func (l *Logger) with(options ...Option) {
 	l.Options = append(l.Options, options...)
@@ -250,32 +252,29 @@ func (l *Logger) log(level Level, deep int, args ...interface{}) {
 	}
 
 	msg := FormatBufferPool(args...)
-	builder := strings.Builder{}
-	builder.Grow(100)
 
-	// 时间
-	builder.WriteString("[")
-	builder.WriteString(time.Now().Format("2006-01-02 - 15:04:05"))
-	builder.WriteString("] ")
-
-	// 级别
-	builder.WriteString("[")
-	builder.WriteString(level.String())
-	builder.WriteString("] ")
-
-	// 调用位置
+	// 获取调用位置
 	_, file, line, _ := runtime.Caller(deep)
 	file = file[PenultimateIndexByteString(file, '/')+1:]
-	builder.WriteString(file)
-	builder.WriteString(":")
-	builder.WriteString(strconv.FormatInt(int64(line), 10))
-	builder.WriteString(" ")
+	lineStr := strconv.FormatInt(int64(line), 10)
 
-	// 消息
-	builder.WriteString(msg)
-	builder.WriteString("\n")
+	// 构建文件行信息
+	fileLine := file + ":" + lineStr
 
-	l.writer.Write([]byte(builder.String()))
+	// 创建日志详情
+	details := Details{
+		Level:   level,
+		Path:    fileLine,
+		Time:    time.Now(),
+		Message: msg,
+		Value:   args,
+	}
+
+	// 使用格式化器格式化日志
+	output := FormatDetails(context.Background(), &details, l.Formatter)
+
+	// 写入输出
+	l.writer.Write([]byte(output))
 }
 
 func (l *Logger) Debug(deep int, args ...interface{}) {

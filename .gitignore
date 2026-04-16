@@ -39,3 +39,5 @@ bin/
 
 out/*
 .gitnexus
+AGENTS.md
+CLAUDE.md

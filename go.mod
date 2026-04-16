@@ -4,6 +4,7 @@ go 1.25.0
 
 require (
 	github.com/bytedance/sonic v1.15.0
+	github.com/CaoStudio/caolog/formatter v0.0.0
 	github.com/go-kratos/kratos/v2 v2.9.2
 	github.com/goccy/go-json v0.10.6
 	go.opentelemetry.io/otel v1.43.0
@@ -30,3 +31,5 @@ require (
 	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace github.com/CaoStudio/caolog/formatter => ./formatter
