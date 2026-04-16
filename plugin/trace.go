@@ -8,7 +8,6 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
-	"go.uber.org/zap/zapcore"
 	"strings"
 )
 
@@ -26,28 +25,21 @@ func NewTrace() *Trace {
 	}
 }
 
-func (t *Trace) GetLogTag(in zapcore.Level) string {
-	//DebugLevel:  "Log.DEBUG",
-	//InfoLevel:   "Log.INFO",
-	//WarnLevel:   "Log.WARN",
-	//ErrorLevel:  "Log.ERROR",
-	//DPanicLevel: "Log.DPANIC",
-	//PanicLevel:  "Log.PANIC",
-	//FatalLevel:  "Log.FATAL",
+func (t *Trace) GetLogTag(in caolog.Level) string {
 	switch in {
-	case zapcore.DebugLevel:
+	case caolog.DebugLevel:
 		return "Log.DEBUG"
-	case zapcore.InfoLevel:
+	case caolog.InfoLevel:
 		return "Log.INFO"
-	case zapcore.WarnLevel:
+	case caolog.WarnLevel:
 		return "Log.WARN"
-	case zapcore.ErrorLevel:
+	case caolog.ErrorLevel:
 		return "Log.ERROR"
-	case zapcore.DPanicLevel:
+	case caolog.DPanicLevel:
 		return "Log.DPANIC"
-	case zapcore.PanicLevel:
+	case caolog.PanicLevel:
 		return "Log.PANIC"
-	case zapcore.FatalLevel:
+	case caolog.FatalLevel:
 		return "Log.FATAL"
 	default:
 		return "Log.UNKNOWN"
@@ -67,7 +59,7 @@ func (t *Trace) Option(ctx context.Context, details *caolog.Details) {
 
 	attrs := make([]attribute.KeyValue, 2)
 	attrs[0] = attribute.String("path", details.Path)
-	if details.Level >= zapcore.ErrorLevel {
+	if details.Level >= caolog.ErrorLevel {
 		err := errors.New(details.Message)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())

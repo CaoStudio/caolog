@@ -2,9 +2,7 @@ package plugin
 
 import (
 	"context"
-	"fmt"
 	caolog "github.com/CaoStudio/caolog"
-	"go.uber.org/zap"
 	"net"
 	"os"
 	"runtime/debug"
@@ -29,7 +27,7 @@ func (r *Recovery) WithDeep(deep int) {
 	r.deep = deep
 }
 
-// Recovery recover掉项目可能出现的panic，并使用zap记录相关日志
+// Recovery recover掉项目可能出现的panic，并记录相关日志
 func (r *Recovery) Recovery() {
 	if err := recover(); err != nil {
 		// Check for a broken connection, as it is not really a
@@ -43,27 +41,32 @@ func (r *Recovery) Recovery() {
 			}
 		}
 		if brokenPipe {
-			r.logger.Logger.Error(
-				fmt.Sprintln(
-					zap.Any("error", err),
-				),
-			)
+			var builder strings.Builder
+			builder.WriteString("error: ")
+			if e, ok := err.(error); ok {
+				builder.WriteString(e.Error())
+			} else {
+				builder.WriteString(caolog.FormatBufferPool(err))
+			}
+			r.logger.Error(r.deep, builder.String())
 			// If the connection is dead, we can't write a status to it.
 			return
 		}
 
-		r.logger.Error(
-			r.deep,
-			fmt.Sprintln(
-				"[Recovery from panic]\n",
-				zap.Any("error", err).String,
-				zap.String("stack", string(debug.Stack())).String,
-			),
-		)
+		var builder strings.Builder
+		builder.WriteString("[Recovery from panic]\nerror: ")
+		if e, ok := err.(error); ok {
+			builder.WriteString(e.Error())
+		} else {
+			builder.WriteString(caolog.FormatBufferPool(err))
+		}
+		builder.WriteString("\nstack: ")
+		builder.WriteString(string(debug.Stack()))
+		r.logger.Error(r.deep, builder.String())
 	}
 }
 
-// CRecovery recover掉项目可能出现的panic，并使用zap记录相关日志
+// CRecovery recover掉项目可能出现的panic，并记录相关日志
 func (r *Recovery) CRecovery() {
 	if err := recover(); err != nil {
 		// Check for a broken connection, as it is not really a
@@ -77,23 +80,27 @@ func (r *Recovery) CRecovery() {
 			}
 		}
 		if brokenPipe {
-			r.logger.Logger.Error(
-				fmt.Sprintln(
-					zap.Any("error", err),
-				),
-			)
+			var builder strings.Builder
+			builder.WriteString("error: ")
+			if e, ok := err.(error); ok {
+				builder.WriteString(e.Error())
+			} else {
+				builder.WriteString(caolog.FormatBufferPool(err))
+			}
+			r.logger.CError(context.Background(), r.deep, builder.String())
 			// If the connection is dead, we can't write a status to it.
 			return
 		}
 
-		r.logger.CError(
-			context.Background(),
-			r.deep,
-			fmt.Sprintln(
-				"[Recovery from panic]\n",
-				zap.Any("error", err).String,
-				zap.String("stack", string(debug.Stack())).String,
-			),
-		)
+		var builder strings.Builder
+		builder.WriteString("[Recovery from panic]\nerror: ")
+		if e, ok := err.(error); ok {
+			builder.WriteString(e.Error())
+		} else {
+			builder.WriteString(caolog.FormatBufferPool(err))
+		}
+		builder.WriteString("\nstack: ")
+		builder.WriteString(string(debug.Stack()))
+		r.logger.CError(context.Background(), r.deep, builder.String())
 	}
 }
